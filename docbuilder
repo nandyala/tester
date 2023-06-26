@@ -1,6 +1,7 @@
 import org.w3c.dom.*;
 import javax.xml.parsers.*;
 import java.io.*;
+import java.util.Scanner;
 
 public class XMLParser {
     public static void main(String[] args) {
@@ -15,33 +16,41 @@ public class XMLParser {
             // Get the root element
             Element root = document.getDocumentElement();
 
+            // Prompt the user to enter the domain name
+            Scanner scanner = new Scanner(System.in);
+            System.out.print("Enter the domain name: ");
+            String domainName = scanner.nextLine();
+
             // Get a NodeList of all nodes with the "account" tag name
             NodeList nodeList = root.getElementsByTagName("account");
 
-            // Iterate over the NodeList and extract the desired information
+            // Iterate over the NodeList and extract the desired information for the specified domain
             for (int i = 0; i < nodeList.getLength(); i++) {
                 Node node = nodeList.item(i);
                 if (node.getNodeType() == Node.ELEMENT_NODE) {
                     Element accountElement = (Element) node;
-
-                    // Extract the values of the "name" and "domain" tags
-                    String name = getTagValue(accountElement, "name");
                     String domain = getTagValue(accountElement, "domain");
-                    System.out.println("Name: " + name);
-                    System.out.println("Domain: " + domain);
 
-                    // Extract all attributevalueref nodes
-                    NodeList attributeValueRefList = accountElement.getElementsByTagName("attributevalueref");
-                    for (int j = 0; j < attributeValueRefList.getLength(); j++) {
-                        Node attributeValueRefNode = attributeValueRefList.item(j);
-                        if (attributeValueRefNode.getNodeType() == Node.ELEMENT_NODE) {
-                            Element attributeValueRefElement = (Element) attributeValueRefNode;
-                            String attributeValueRef = attributeValueRefElement.getTextContent();
-                            System.out.println("attributevalueref: " + attributeValueRef);
+                    // Check if the domain matches the user input
+                    if (domain.equalsIgnoreCase(domainName)) {
+                        // Extract the values of the "name" and "domain" tags
+                        String name = getTagValue(accountElement, "name");
+                        System.out.println("Name: " + name);
+                        System.out.println("Domain: " + domain);
+
+                        // Extract all attributevalueref nodes
+                        NodeList attributeValueRefList = accountElement.getElementsByTagName("attributevalueref");
+                        for (int j = 0; j < attributeValueRefList.getLength(); j++) {
+                            Node attributeValueRefNode = attributeValueRefList.item(j);
+                            if (attributeValueRefNode.getNodeType() == Node.ELEMENT_NODE) {
+                                Element attributeValueRefElement = (Element) attributeValueRefNode;
+                                String attributeValueRef = attributeValueRefElement.getTextContent();
+                                System.out.println("attributevalueref: " + attributeValueRef);
+                            }
                         }
-                    }
 
-                    System.out.println();
+                        System.out.println();
+                    }
                 }
             }
         } catch (Exception e) {
