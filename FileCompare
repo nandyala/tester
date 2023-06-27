@@ -1,0 +1,168 @@
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.*;
+import java.util.*;
+
+public class FileComparator {
+
+    public static void main(String[] args) {
+        String file1Path = "C:\\Test\\file1.txt";
+        String file2Path = "C:\\Test\\file2.txt";
+        String excelFilePath = "C:\\Test\\result.xlsx";
+
+        String file1Name = "file1.txt";
+        String file2Name = "file2.txt";
+
+        try {
+            List<String> file1Lines = readFile(file1Path);
+            List<String> file2Lines = readFile(file2Path);
+
+            Map<String, List<String>> file1Map = extractKeyValues(file1Lines);
+            Map<String, List<String>> file2Map = extractKeyValues(file2Lines);
+
+            Map<String, String> discrepanciesMap = findDiscrepancies(file1Map, file2Map, file1Name, file2Name);
+
+            writeExcelFile(discrepanciesMap, excelFilePath, file1Name, file2Name);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static List<String> readFile(String filePath) throws IOException {
+        List<String> lines = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                lines.add(line);
+            }
+        }
+
+        return lines;
+    }
+
+    private static Map<String, List<String>> extractKeyValues(List<String> lines) {
+        Map<String, List<String>> keyValuesMap = new HashMap<>();
+
+        for (String line : lines) {
+            String[] parts = line.split("-");
+            if (parts.length == 2) {
+                String key = parts[0];
+                String value = parts[1];
+
+                List<String> values = keyValuesMap.getOrDefault(key, new ArrayList<>());
+                values.add(value);
+                keyValuesMap.put(key, values);
+            }
+        }
+
+        return keyValuesMap;
+    }
+
+    private static Map<String, String> findDiscrepancies(Map<String, List<String>> file1Map, Map<String, List<String>> file2Map, String file1Name, String file2Name) {
+        Map<String, String> discrepanciesMap = new HashMap<>();
+
+        for (Map.Entry<String, List<String>> entry : file1Map.entrySet()) {
+            String key = entry.getKey();
+            List<String> file1Values = entry.getValue();
+            List<String> file2Values = file2Map.getOrDefault(key, new ArrayList<>());
+
+            List<String> discrepancies = findUniqueValues(file1Values, file2Values);
+            if (!discrepancies.isEmpty()) {
+                List<String> discrepancyValues = new ArrayList<>();
+                for (String discrepancy : discrepancies) {
+                    if(!file1Values.contains(discrepancy)) {
+                        discrepancyValues.add(file1Name + "-" + discrepancy);
+                    } else {
+                        discrepancyValues.add(file2Name + "-" + discrepancy);
+                    }
+                //    discrepancyValues.add(file1Name + "-" + discrepancy);
+                }
+                String joinedValues = String.join(", ", discrepancyValues);
+                discrepanciesMap.put(key, joinedValues);
+            }
+        }
+
+/*
+        for (Map.Entry<String, List<String>> entry : file2Map.entrySet()) {
+            String key = entry.getKey();
+            List<String> file2Values = entry.getValue();
+            List<String> file1Values = file1Map.get(key);
+
+            if (file1Values == null) {
+                List<String> discrepancies = findUniqueValues(file2Values, new ArrayList<>());
+                if (!discrepancies.isEmpty()) {
+                    List<String> discrepancyValues = new ArrayList<>();
+                    for (String discrepancy : discrepancies) {
+                        discrepancyValues.add(file2Name + "-" + discrepancy);
+                    }
+                    String joinedValues = String.join(", ", discrepancyValues);
+                    discrepanciesMap.put(key, joinedValues);
+                }
+            }
+        }
+*/
+
+        return discrepanciesMap;
+    }
+
+    private static List<String> findUniqueValues(List<String> list1, List<String> list2) {
+        List<String> uniqueValues = new ArrayList<>();
+
+        for (String value : list1) {
+            if (!list2.contains(value) && !uniqueValues.contains(value)) {
+                uniqueValues.add(value);
+            }
+        }
+
+        for (String value : list2) {
+            if (!list1.contains(value) && !uniqueValues.contains(value)) {
+                uniqueValues.add(value);
+            }
+        }
+
+        return uniqueValues;
+    }
+
+
+    private static void writeExcelFile(Map<String, String> discrepanciesMap, String filePath, String file1Name, String file2Name) throws IOException {
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("Results");
+
+        // Create header row with file names
+        Row headerRow = sheet.createRow(0);
+        headerRow.createCell(0).setCellValue("Key");
+        headerRow.createCell(1).setCellValue(file1Name);
+        headerRow.createCell(2).setCellValue(file2Name);
+
+        int rowNumber = 1;
+        for (Map.Entry<String, String> entry : discrepanciesMap.entrySet()) {
+            String key = entry.getKey();
+            String discrepancyValues = entry.getValue();
+
+            Row row = sheet.createRow(rowNumber++);
+            row.createCell(0).setCellValue(key);
+            List joinedValues1 = new ArrayList<>();
+            List joinedValues2 = new ArrayList<>();
+            String[] discrepancyArray = discrepancyValues.split(", ");
+            for (int i = 0; i < discrepancyArray.length; i++) {
+                String discrepancy = discrepancyArray[i];
+                if (discrepancy.startsWith(file1Name)) {
+                    joinedValues1.add(discrepancy.substring(file1Name.length() + 1));
+
+                } else if (discrepancy.startsWith(file2Name)) {
+                    joinedValues2.add(discrepancy.substring(file2Name.length() + 1));
+                    }
+            }
+            row.createCell(1 ).setCellValue(String.join(",", joinedValues1));
+            row.createCell(2 ).setCellValue(String.join(",", joinedValues2));
+        }
+
+        try (FileOutputStream outputStream = new FileOutputStream(filePath)) {
+            workbook.write(outputStream);
+        }
+
+        System.out.println("Excel file created successfully at: " + filePath);
+    }
+}
