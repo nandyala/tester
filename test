@@ -25,3 +25,14 @@ send_email_with_attachment() {
     # Compose the email
     echo "This is the body of the email." | mailx -s "$subject" -a "$attachment" "$recipient"
 }
+
+
+
+gzip_with_timestamp() {
+    local original_file="$1"
+    local timestamp=$(date +"%Y%m%d%H%M%S")
+    local gzipped_file="${original_file%.${original_file##*.}}_$timestamp.gz"
+
+    gzip "$original_file" -c > "$gzipped_file"
+    echo "File '$original_file' has been gzipped as '$gzipped_file'."
+}
