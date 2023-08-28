@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# MySQL database credentials
+DB_USER="your_username"
+DB_PASSWORD="your_password"
+DB_NAME="your_database"
+
+# SQL query to execute
+SQL_QUERY="SELECT column1, column2, column3 FROM your_table;"
+
+# Output CSV file name
+CSV_FILE="output.csv"
+
+# Execute the MySQL query and save the result as a CSV file
+mysql -u "$DB_USER" -p"$DB_PASSWORD" -D "$DB_NAME" -B -e "$SQL_QUERY" | sed 's/\t/","/g;s/^/"/;s/$/"/;s/\n//g' > "$CSV_FILE"
+
+echo "CSV file generated: $CSV_FILE"
