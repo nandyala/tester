@@ -15,3 +15,13 @@ CSV_FILE="output.csv"
 mysql -u "$DB_USER" -p"$DB_PASSWORD" -D "$DB_NAME" -B -e "$SQL_QUERY" | sed 's/\t/","/g;s/^/"/;s/$/"/;s/\n//g' > "$CSV_FILE"
 
 echo "CSV file generated: $CSV_FILE"
+
+
+send_email_with_attachment() {
+    local subject="$1"
+    local recipient="$2"
+    local attachment="$3"
+
+    # Compose the email
+    echo "This is the body of the email." | mailx -s "$subject" -a "$attachment" "$recipient"
+}
