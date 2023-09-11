@@ -1,0 +1,53 @@
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+
+public class TeradataJDBCExample {
+    public static void main(String[] args) {
+        Connection connection = null;
+        Statement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            // Load the Teradata driver
+            Class.forName("com.teradata.jdbc.TeraDriver");
+
+            // Establish a connection
+            String jdbcUrl = "jdbc:teradata://YourTeradataHostIP/DATABASE=YourDatabase";
+            String username = "yourUsername";
+            String password = "yourPassword";
+            connection = DriverManager.getConnection(jdbcUrl, username, password);
+
+            // Create a statement object
+            stmt = connection.createStatement();
+
+            // Execute a SQL query and retrieve the result set
+            rs = stmt.executeQuery("SELECT * FROM YourTableName");
+
+            // Process the result set
+            while (rs.next()) {
+                String column1 = rs.getString("column1");
+                String column2 = rs.getString("column2");
+                System.out.println("Column 1: " + column1 + ", Column 2: " + column2);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            // Close resources
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (stmt != null) {
+                    stmt.close();
+                }
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
